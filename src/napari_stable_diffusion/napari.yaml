@@ -1,0 +1,21 @@
+name: napari-stable-diffusion
+display_name: Stable Diffusion
+contributions:
+  commands:
+    - id: napari-stable-diffusion.make_qwidget
+      python_name: napari_stable_diffusion._widget:ExampleQWidget
+      title: Make example QWidget
+    - id: napari-stable-diffusion.make_magic_widget
+      python_name: napari_stable_diffusion._widget:example_magic_widget
+      title: Make example magic widget
+    - id: napari-stable-diffusion.make_func_widget
+      python_name: napari_stable_diffusion._widget:example_function_widget
+      title: Make example function widget
+  widgets:
+    - command: napari-stable-diffusion.make_qwidget
+      display_name: Example QWidget
+    - command: napari-stable-diffusion.make_magic_widget
+      display_name: Example Magic Widget
+    - command: napari-stable-diffusion.make_func_widget
+      autogenerate: true
+      display_name: Example Function Widget
