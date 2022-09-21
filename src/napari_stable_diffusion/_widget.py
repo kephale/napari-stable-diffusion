@@ -15,10 +15,11 @@ from qtpy.QtWidgets import (
     QComboBox,
     QLineEdit,
     QSpinBox,
+    QCheckBox,
+    QVBoxLayout,
+    QLabel,
+    QPlainTextEdit,
 )
-
-# import torch
-# from torch import autocast // only for GPU
 
 import numpy as np
 
@@ -32,23 +33,33 @@ from diffusers import StableDiffusionPipeline
 if TYPE_CHECKING:
     import napari
 
+from napari.qt.threading import thread_worker, create_worker
+
 
 class StableDiffusionWidget(QWidget):
-    # your QWidget.__init__ can optionally request the napari viewer instance
-    # in one of two ways:
-    # 1. use a parameter called `napari_viewer`, as done here
-    # 2. use a type annotation of 'napari.viewer.Viewer' for any parameter
     def __init__(self, napari_viewer):
         super().__init__()
         self.viewer = napari_viewer
 
         # Textbox for entering prompt
-        self.prompt_textbox = QLineEdit(self)
+        self.prompt_textbox = QPlainTextEdit(self)
 
         # Number of output images
         self.gallery_size = QSpinBox(self)
         self.gallery_size.setMinimum(1)
         self.gallery_size.setValue(9)
+
+        # Width and height
+        self.width_input = QSpinBox(self)
+        self.width_input.setMinimum(1)
+        self.width_input.setMaximum(2**31 - 1)
+        # Overflows if larger than this maximum
+        self.width_input.setValue(512)
+
+        self.height_input = QSpinBox(self)
+        self.height_input.setMinimum(1)
+        self.height_input.setMaximum(2**31 - 1)
+        self.height_input.setValue(512)
 
         # Select devices:
         # CPU is always available
@@ -69,18 +80,66 @@ class StableDiffusionWidget(QWidget):
         self.num_inference_steps.setMinimum(1)
         self.num_inference_steps.setValue(50)
 
+        # Not Safe For Work button
+        self.nsfw_button = QCheckBox(self)
+        self.nsfw_button.setCheckState(True)
+
         btn = QPushButton("Run")
         btn.clicked.connect(self._on_click)
 
-        self.setLayout(QHBoxLayout())
+        # Layout and labels
+        self.setLayout(QVBoxLayout())
+
+        label = QLabel(self)
+        label.setText("Prompt")
+        self.layout().addWidget(label)
         self.layout().addWidget(self.prompt_textbox)
+
+        label = QLabel(self)
+        label.setText("Number of images")
+        self.layout().addWidget(label)
         self.layout().addWidget(self.gallery_size)
+
+        label = QLabel(self)
+        label.setText("Number of inference steps")
+        self.layout().addWidget(label)
         self.layout().addWidget(self.num_inference_steps)
+
+        label = QLabel(self)
+        label.setText("Image width")
+        self.layout().addWidget(label)
+        self.layout().addWidget(self.width_input)
+
+        label = QLabel(self)
+        label.setText("Image height")
+        self.layout().addWidget(label)
+        self.layout().addWidget(self.height_input)
+
+        label = QLabel(self)
+        label.setText("Enable Not Safe For Work mode")
+        self.layout().addWidget(label)
+        self.layout().addWidget(self.nsfw_button)
+
+        label = QLabel(self)
+        label.setText("Compute device")
+        self.layout().addWidget(label)
         self.layout().addWidget(self.device_list)
+
         self.layout().addWidget(btn)
 
     def _on_click(self):
-        prompt = self.prompt_textbox.text()
+        # Has issues on mps and small GPUs
+        # self.generate_images_batch()
+
+        # worker = create_worker(self.generate_images_sequential)
+        # worker.start()
+
+        # TODO: Notify the user that things are processing
+
+        self.generate_images_sequential()
+
+    def generate_images_sequential(self):
+        prompt = self.prompt_textbox.document().toPlainText()
         print(f"Prompt is {prompt}")
 
         # Get the device: cpu or gpu
@@ -96,24 +155,14 @@ class StableDiffusionWidget(QWidget):
         # Pre-generate the latents to ensure correct dtype
         batch_size = len(prompt)
         in_channels = 3
-        height = 512
-        width = 512
+        height = self.height_input.value()
+        width = self.width_input.value()
         latents_shape = (batch_size, in_channels, height // 8, width // 8)
-        latents = torch.randn(
-            latents_shape,
-            generator=None,
-            device=("cpu" if device == "mps" else device),
-            dtype=torch.float16,
-        )
 
         # Load the pipeline
         pipe = StableDiffusionPipeline.from_pretrained(
             "CompVis/stable-diffusion-v1-4",
             use_auth_token=MY_SECRET_TOKEN,
-            torch_dtype=torch.float16,
-            revision="fp16",
-            output_type="ndarray",
-            latents=latents,
             height=height,
             width=width,
             num_inference_steps=self.num_inference_steps.value(),
@@ -122,21 +171,101 @@ class StableDiffusionWidget(QWidget):
 
         # Run the pipeline
         num_images = self.gallery_size.value()
-        image_list = pipe([prompt] * num_images)
 
         # Populate the gallery
         for gallery_id in range(num_images):
-            # For PIL outputs
-            # array = np.array(image_list.images[gallery_id])
+            # Generate our random latent space uniquely per image
+            latents = torch.randn(
+                latents_shape,
+                generator=None,
+                device=("cpu" if device == "mps" else device),
+                #            dtype=torch.float16,
+            )
+            pipe.latents = latents
+            pipe.to(device)
 
-            # For ndarray outputs
-            array = image_list.images[gallery_id]
+            image_list = pipe([prompt])
+
+            array = np.array(image_list.images[0])
+
+            # If NSFW, then zero over image
+            if image_list["nsfw_content_detected"][0]:
+                array = np.zeros_like(array)
 
             # Empty GPU cache as we generate images
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-            self.viewer.add_image(array, rgb=True)
+            self.viewer.add_image(
+                array, name=f"nsd_{prompt}-{gallery_id}", rgb=True
+            )
 
         # Show gallery as grid
         self.viewer.grid.enabled = True
+
+
+# Batch mode has been disabled because of memory issues on multiple devices
+# def generate_images_batch(self):
+#     prompt = self.prompt_textbox.text()
+#     print(f"Prompt is {prompt}")
+
+#     # Get the device: cpu or gpu
+#     device = self.device_list.currentText()
+
+#     # Get huggingface token from environment variable. Generate at HF
+#     MY_SECRET_TOKEN = (
+#         os.environ.get("HF_TOKEN_SD")
+#         if "HF_TOKEN_SD" in os.environ
+#         else None
+#     )
+
+#     # Pre-generate the latents to ensure correct dtype
+#     batch_size = len(prompt)
+#     in_channels = 3
+#     height = 256
+#     width = height
+#     latents_shape = (batch_size, in_channels, height // 8, width // 8)
+#     latents = torch.randn(
+#         latents_shape,
+#         generator=None,
+#         device=("cpu" if device == "mps" else device),
+#         #            dtype=torch.float16,
+#     )
+
+#     # Load the pipeline
+#     pipe = StableDiffusionPipeline.from_pretrained(
+#         "CompVis/stable-diffusion-v1-4",
+#         use_auth_token=MY_SECRET_TOKEN,
+#         #             torch_dtype=torch.float16,
+#         #             revision="fp16",
+#         # output_type="ndarray",
+#         latents=latents,
+#         height=height,
+#         width=width,
+#         num_inference_steps=self.num_inference_steps.value(),
+#     )
+#     pipe.to(device)
+
+#     # Run the pipeline
+#     num_images = self.gallery_size.value()
+#     image_list = pipe([prompt] * num_images)
+
+#     # Populate the gallery
+#     for gallery_id in range(num_images):
+#         # For PIL outputs
+#         array = np.array(image_list.images[gallery_id])
+
+#         if image_list["nsfw_content_detected"][gallery_id]:
+#             array = np.zeros_like(array)
+
+#         # For ndarray outputs
+#         # array = image_list.images[gallery_id]
+
+#         # Empty GPU cache as we generate images
+#         if torch.cuda.is_available():
+#             torch.cuda.empty_cache()
+
+#         self.viewer.add_image(array, rgb=True)
+
+#     # Show gallery as grid
+#     self.viewer.grid.enabled = True
