@@ -45,6 +45,16 @@ HF_TOKEN_SD="hf_aaaAaaaasdadsadsaoaoaoasoidijo" napari
 
 For more information on the Stable Diffusion model itself, please see https://huggingface.co/CompVis/stable-diffusion-v1-4.
 
+### Apple M1 specific instructions
+
+To utilize the M1 GPU, the nightly version of PyTorch needs to be
+installed. Consider using `conda` or `mamba` like this:
+
+```
+mamba create -c pytorch-nightly -n napari-stable-diffusion python=3.9 pip pyqt pytorch torchvision
+pip install git+https://github.com/kephale/napari-stable-diffusion.git
+```
+
 ## Contributing
 
 Contributions are very welcome. Tests can be run with [tox], please ensure
