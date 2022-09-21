@@ -8,14 +8,35 @@ Replace code below according to your needs.
 """
 from typing import TYPE_CHECKING
 
-from magicgui import magic_factory
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
+from qtpy.QtWidgets import (
+    QHBoxLayout,
+    QPushButton,
+    QWidget,
+    QComboBox,
+    QLineEdit,
+)
+
+# import torch
+# from torch import autocast // only for GPU
+
+import numpy as np
+
+import os
+
+import torch
+from diffusers import StableDiffusionPipeline
+
+# from diffusers import StableDiffusionImg2ImgPipeline
 
 if TYPE_CHECKING:
     import napari
 
+MY_SECRET_TOKEN = (
+    os.environ.get("HF_TOKEN_SD") if "HF_TOKEN_SD" in os.environ else None
+)
 
-class ExampleQWidget(QWidget):
+
+class StableDiffusionWidget(QWidget):
     # your QWidget.__init__ can optionally request the napari viewer instance
     # in one of two ways:
     # 1. use a parameter called `napari_viewer`, as done here
@@ -24,23 +45,45 @@ class ExampleQWidget(QWidget):
         super().__init__()
         self.viewer = napari_viewer
 
-        btn = QPushButton("Click me!")
+        # Textbox for entering prompt
+        self.prompt_textbox = QLineEdit(self)
+
+        # Select devices:
+        # CPU is always available
+        available_devices = ["cpu"]
+        # Add 'mps' for M1
+        if torch.backends.mps.is_available():
+            available_devices += ["mps"]
+        # Add 'cuda' for nvidia cards
+        if torch.cuda.is_available():
+            available_devices += [
+                f"cuda:{id}" for id in range(torch.cuda.device_count())
+            ]
+
+        self.device_list = QComboBox(self)
+        self.device_list.addItems(available_devices)
+
+        btn = QPushButton("Run")
         btn.clicked.connect(self._on_click)
 
         self.setLayout(QHBoxLayout())
+        self.layout().addWidget(self.prompt_textbox)
+        self.layout().addWidget(self.device_list)
         self.layout().addWidget(btn)
 
     def _on_click(self):
-        print("napari has", len(self.viewer.layers), "layers")
+        prompt = self.prompt_textbox.text()
+        print(f"Prompt is {prompt}")
 
+        device = self.device_list.currentText()
 
-@magic_factory
-def example_magic_widget(img_layer: "napari.layers.Image"):
-    print(f"you have selected {img_layer}")
+        pipe = StableDiffusionPipeline.from_pretrained(
+            "CompVis/stable-diffusion-v1-4", use_auth_token=MY_SECRET_TOKEN
+        )
+        pipe.to(device)
 
+        image_list = pipe([prompt])
 
-# Uses the `autogenerate: true` flag in the plugin manifest
-# to indicate it should be wrapped as a magicgui to autogenerate
-# a widget.
-def example_function_widget(img_layer: "napari.layers.Image"):
-    print(f"you have selected {img_layer}")
+        array = np.array(image_list.images[0])
+
+        self.viewer.add_image(array, rgb=True)
