@@ -13,6 +13,9 @@ A demo of stable diffusion in napari.
 
 This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
 
+![demo image of napari-stable-diffusion of the prompt "a game of
+capture the flag between unicorns and hippopotomusses"](./napari_stable_diffusion_unicorn_hippo.png)
+
 <!--
 Don't miss the full getting started guide to set up your new package:
 https://github.com/napari/cookiecutter-napari-plugin#getting-started
