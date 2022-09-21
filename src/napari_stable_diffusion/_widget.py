@@ -65,6 +65,10 @@ class StableDiffusionWidget(QWidget):
         self.device_list = QComboBox(self)
         self.device_list.addItems(available_devices)
 
+        self.num_inference_steps = QSpinBox(self)
+        self.num_inference_steps.setMinimum(1)
+        self.num_inference_steps.setValue(50)
+
         btn = QPushButton("Run")
         btn.clicked.connect(self._on_click)
 
@@ -87,9 +91,30 @@ class StableDiffusionWidget(QWidget):
             else None
         )
 
+        # Pre-generate the latents to ensure correct dtype
+        batch_size = len(prompt)
+        in_channels = 3
+        height = 512
+        width = 512
+        latents_shape = (batch_size, in_channels, height // 8, width // 8)
+        latents = torch.randn(
+            latents_shape,
+            generator=None,
+            device=("cpu" if device == "mps" else device),
+            dtype=torch.float16,
+        )
+
         # Load the pipeline
         pipe = StableDiffusionPipeline.from_pretrained(
-            "CompVis/stable-diffusion-v1-4", use_auth_token=MY_SECRET_TOKEN
+            "CompVis/stable-diffusion-v1-4",
+            use_auth_token=MY_SECRET_TOKEN,
+            torch_dtype=torch.float16,
+            revision="fp16",
+            output_type="ndarray",
+            latents=latents,
+            height=height,
+            width=width,
+            num_inference_steps=self.num_inference_steps.value(),
         )
         pipe.to(device)
 
@@ -99,7 +124,11 @@ class StableDiffusionWidget(QWidget):
 
         # Populate the gallery
         for gallery_id in range(num_images):
-            array = np.array(image_list.images[gallery_id])
+            # For PIL outputs
+            # array = np.array(image_list.images[gallery_id])
+
+            # For ndarray outputs
+            array = image_list.images[gallery_id]
 
             # Empty GPU cache as we generate images
             if torch.cuda.is_available():
