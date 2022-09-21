@@ -7,4 +7,4 @@ contributions:
       title: "Stable Diffusion: Text to Image"
   widgets:
     - command: napari-stable-diffusion.make_qwidget
-      display_name: Stable Diffusion Widget
+      display_name: "Stable Diffusion: Text to Image"

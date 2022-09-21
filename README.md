@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/kephale/napari-stable-diffusion/branch/main/graph/badge.svg)](https://codecov.io/gh/kephale/napari-stable-diffusion)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-stable-diffusion)](https://napari-hub.org/plugins/napari-stable-diffusion)
 
-A demo of stable diffusion in napari
+A demo of stable diffusion in napari.
 
 ----------------------------------
 
@@ -27,12 +27,23 @@ You can install `napari-stable-diffusion` via [pip]:
 
     pip install napari-stable-diffusion
 
-
-
 To install latest development version :
 
     pip install git+https://github.com/kephale/napari-stable-diffusion.git
 
+You will also need to sign up with HuggingFace and [generate an access
+token](https://huggingface.co/docs/hub/security-tokens) to get access to the
+Stable Diffusion model we use.
+
+When you have generated your access token you can either permanently
+set the `HF_TOKEN_SD` environment variable in your `.bashrc` or whichever file
+your OS uses, or you can include it on the command line
+
+```
+HF_TOKEN_SD="hf_aaaAaaaasdadsadsaoaoaoasoidijo" napari
+```
+
+For more information on the Stable Diffusion model itself, please see https://huggingface.co/CompVis/stable-diffusion-v1-4.
 
 ## Contributing
 
