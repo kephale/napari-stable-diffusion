@@ -14,6 +14,7 @@ from qtpy.QtWidgets import (
     QWidget,
     QComboBox,
     QLineEdit,
+    QSpinBox,
 )
 
 # import torch
@@ -47,6 +48,11 @@ class StableDiffusionWidget(QWidget):
 
         # Textbox for entering prompt
         self.prompt_textbox = QLineEdit(self)
+
+        # Number of output images
+        self.gallery_size = QSpinBox(self)
+        self.gallery_size.setMinimum(1)
+        self.gallery_size.setValue(9)
 
         # Select devices:
         # CPU is always available
@@ -82,7 +88,7 @@ class StableDiffusionWidget(QWidget):
         )
         pipe.to(device)
 
-        image_list = pipe([prompt])
+        image_list = pipe([prompt] * self.gallery_size.value())
 
         array = np.array(image_list.images[0])
 
