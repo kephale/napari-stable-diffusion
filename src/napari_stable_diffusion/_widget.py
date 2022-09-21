@@ -94,11 +94,16 @@ class StableDiffusionWidget(QWidget):
         pipe.to(device)
 
         # Run the pipeline
-        image_list = pipe([prompt] * self.gallery_size.value())
+        num_images = self.gallery_size.value()
+        image_list = pipe([prompt] * num_images)
 
         # Populate the gallery
-        for gallery_id in range(len(image_list.images)):
+        for gallery_id in range(num_images):
             array = np.array(image_list.images[gallery_id])
+
+            # Empty GPU cache as we generate images
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
             self.viewer.add_image(array, rgb=True)
 
