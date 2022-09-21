@@ -74,6 +74,8 @@ class StableDiffusionWidget(QWidget):
 
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(self.prompt_textbox)
+        self.layout().addWidget(self.gallery_size)
+        self.layout().addWidget(self.num_inference_steps)
         self.layout().addWidget(self.device_list)
         self.layout().addWidget(btn)
 
