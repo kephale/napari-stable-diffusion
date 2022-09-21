@@ -4,7 +4,7 @@ contributions:
   commands:
     - id: napari-stable-diffusion.make_qwidget
       python_name: napari_stable_diffusion._widget:StableDiffusionWidget
-      title: Make example QWidget
+      title: "Stable Diffusion: Text to Image"
   widgets:
     - command: napari-stable-diffusion.make_qwidget
-      display_name: Example QWidget
+      display_name: Stable Diffusion Widget
