@@ -65,7 +65,10 @@ class StableDiffusionWidget(QWidget):
         # CPU is always available
         available_devices = ["cpu"]
         # Add 'mps' for M1
-        if torch.backends.mps.is_available():
+        if (
+            hasattr(torch.backends, "mps")
+            and torch.backends.mps.is_available()
+        ):
             available_devices += ["mps"]
         # Add 'cuda' for nvidia cards
         if torch.cuda.is_available():
