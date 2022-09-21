@@ -81,15 +81,23 @@ class StableDiffusionWidget(QWidget):
         prompt = self.prompt_textbox.text()
         print(f"Prompt is {prompt}")
 
+        # Get the device: cpu or gpu
         device = self.device_list.currentText()
 
+        # Load the pipeline
         pipe = StableDiffusionPipeline.from_pretrained(
             "CompVis/stable-diffusion-v1-4", use_auth_token=MY_SECRET_TOKEN
         )
         pipe.to(device)
 
+        # Run the pipeline
         image_list = pipe([prompt] * self.gallery_size.value())
 
-        array = np.array(image_list.images[0])
+        # Populate the gallery
+        for gallery_id in range(len(image_list.images)):
+            array = np.array(image_list.images[gallery_id])
 
-        self.viewer.add_image(array, rgb=True)
+            self.viewer.add_image(array, rgb=True)
+
+        # Show gallery as grid
+        self.viewer.grid.enabled = True
