@@ -32,10 +32,6 @@ from diffusers import StableDiffusionPipeline
 if TYPE_CHECKING:
     import napari
 
-MY_SECRET_TOKEN = (
-    os.environ.get("HF_TOKEN_SD") if "HF_TOKEN_SD" in os.environ else None
-)
-
 
 class StableDiffusionWidget(QWidget):
     # your QWidget.__init__ can optionally request the napari viewer instance
@@ -83,6 +79,13 @@ class StableDiffusionWidget(QWidget):
 
         # Get the device: cpu or gpu
         device = self.device_list.currentText()
+
+        # Get huggingface token from environment variable. Generate at HF
+        MY_SECRET_TOKEN = (
+            os.environ.get("HF_TOKEN_SD")
+            if "HF_TOKEN_SD" in os.environ
+            else None
+        )
 
         # Load the pipeline
         pipe = StableDiffusionPipeline.from_pretrained(
