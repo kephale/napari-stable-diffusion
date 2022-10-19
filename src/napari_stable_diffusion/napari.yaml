@@ -5,6 +5,11 @@ contributions:
     - id: napari-stable-diffusion.make_qwidget
       python_name: napari_stable_diffusion._widget:StableDiffusionWidget
       title: "Stable Diffusion: Text to Image"
+    - id: napari-stable-diffusion.make_img2img_qwidget
+      python_name: napari_stable_diffusion._widget_img2img:StableDiffusionImg2ImgWidget
+      title: "Stable Diffusion: Image to Image"      
   widgets:
     - command: napari-stable-diffusion.make_qwidget
       display_name: "Stable Diffusion: Text to Image"
+    - command: napari-stable-diffusion.make_img2img_qwidget
+      display_name: "Stable Diffusion: Image to Image"      

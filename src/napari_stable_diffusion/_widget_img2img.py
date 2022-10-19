@@ -21,22 +21,24 @@ from qtpy.QtWidgets import (
     QPlainTextEdit,
 )
 
+from magicgui.widgets import create_widget
+
+from PIL import Image
 import numpy as np
 
 import os
 
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionImg2ImgPipeline
 
 # from diffusers import StableDiffusionImg2ImgPipeline
 
-if TYPE_CHECKING:
-    import napari
+import napari
 
 from napari.qt.threading import thread_worker, create_worker
 
 
-class StableDiffusionWidget(QWidget):
+class StableDiffusionImg2ImgWidget(QWidget):
     def __init__(self, napari_viewer):
         super().__init__()
         self.viewer = napari_viewer
@@ -92,6 +94,9 @@ class StableDiffusionWidget(QWidget):
 
         # Layout and labels
         self.setLayout(QVBoxLayout())
+        self._image_layers = create_widget(annotation=napari.layers.Image)
+        self.layout().addWidget(QLabel("Image"))
+        self.layout().addWidget(self._image_layers.native)
 
         label = QLabel(self)
         label.setText("Prompt")
@@ -163,7 +168,7 @@ class StableDiffusionWidget(QWidget):
         latents_shape = (batch_size, in_channels, height // 8, width // 8)
 
         # Load the pipeline
-        pipe = StableDiffusionPipeline.from_pretrained(
+        pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
             "CompVis/stable-diffusion-v1-4",
             use_auth_token=MY_SECRET_TOKEN,
             height=height,
@@ -171,6 +176,15 @@ class StableDiffusionWidget(QWidget):
             num_inference_steps=self.num_inference_steps.value(),
         )
         pipe.to(device)
+
+        # Fail if no image selected
+        if self._image_layers.value is None:
+            print("No image selected")
+            return
+
+        # Get initial image
+        init_image = Image.fromarray(self._image_layers.value).convert("RGB")
+        init_image = init_image.resize((768, 512))
 
         # Run the pipeline
         num_images = self.gallery_size.value()
@@ -187,7 +201,13 @@ class StableDiffusionWidget(QWidget):
             pipe.latents = latents
             pipe.to(device)
 
-            image_list = pipe([prompt])
+            # TODO add strength and guidance_scale to GUI
+            image_list = pipe(
+                prompt=[prompt],
+                init_image=[init_image],
+                strength=0.75,
+                guidance_scale=7.5,
+            )
 
             array = np.array(image_list.images[0])
 
