@@ -183,7 +183,9 @@ class StableDiffusionImg2ImgWidget(QWidget):
             return
 
         # Get initial image
-        init_image = Image.fromarray(self._image_layers.value).convert("RGB")
+        init_image = Image.fromarray(self._image_layers.value.data).convert(
+            "RGB"
+        )
         init_image = init_image.resize((768, 512))
 
         # Run the pipeline
@@ -204,7 +206,7 @@ class StableDiffusionImg2ImgWidget(QWidget):
             # TODO add strength and guidance_scale to GUI
             image_list = pipe(
                 prompt=[prompt],
-                init_image=[init_image],
+                init_image=init_image,
                 strength=0.75,
                 guidance_scale=7.5,
             )
