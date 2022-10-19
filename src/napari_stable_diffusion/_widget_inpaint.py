@@ -224,7 +224,11 @@ class StableDiffusionInpaintWidget(QWidget):
                 guidance_scale=7.5,
             )
 
+            # This is the SD output
             array = np.array(image_list.images[0])
+
+            # Mask the output
+            array = np.where(mask == 1, init_image, array)
 
             # If NSFW, then zero over image
             if image_list["nsfw_content_detected"][0]:
