@@ -228,7 +228,7 @@ class StableDiffusionInpaintWidget(QWidget):
             array = np.array(image_list.images[0])
 
             # Mask the output
-            array = np.where(mask == 1, init_image, array)
+            array = np.where(mask == 1, array, init_image)
 
             # If NSFW, then zero over image
             if image_list["nsfw_content_detected"][0]:
