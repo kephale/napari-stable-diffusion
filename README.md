@@ -13,7 +13,7 @@ A demo of stable diffusion in napari.
 
 This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
 
-![demo image of napari-stable-diffusion of the prompt "a unicorn and a dinosaur eating cookies and drinking tea"](./napari_stable_diffusion_demo.png)
+![demo image of napari-stable-diffusion of the prompt "a unicorn and a dinosaur eating cookies and drinking tea"](https://github.com/kephale/napari-stable-diffusion/raw/main/napari_stable_diffusion_demo.png)
 
 <!--
 Don't miss the full getting started guide to set up your new package:
