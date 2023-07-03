@@ -29,6 +29,8 @@ from diffusers import StableDiffusionImg2ImgPipeline
 
 import napari
 
+from napari.qt.threading import thread_worker
+
 from napari_stable_diffusion.utils import get_stable_diffusion_model
 
 
@@ -138,8 +140,21 @@ class StableDiffusionImg2ImgWidget(QWidget):
 
         # TODO: Notify the user that things are processing
 
-        self.generate_images_sequential()
+        worker = self.generate_images_sequential()
 
+        def yield_catcher(payload):
+            array, title = payload
+
+            self.viewer.add_image(array, name=title, rgb=True)
+
+            # Show gallery as grid
+            self.viewer.grid.enabled = True
+
+        worker.yielded.connect(yield_catcher)
+
+        worker.start()
+
+    @thread_worker
     def generate_images_sequential(self):
         prompt = self.prompt_textbox.document().toPlainText()
         print(f"Prompt is {prompt}")
@@ -200,7 +215,7 @@ class StableDiffusionImg2ImgWidget(QWidget):
             # TODO add strength and guidance_scale to GUI
             image_list = pipe(
                 prompt=[prompt],
-                init_image=init_image,
+                image=init_image,
                 strength=0.75,
                 guidance_scale=7.5,
             )
@@ -215,9 +230,4 @@ class StableDiffusionImg2ImgWidget(QWidget):
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-            self.viewer.add_image(
-                array, name=f"nsd_{prompt}-{gallery_id}", rgb=True
-            )
-
-        # Show gallery as grid
-        self.viewer.grid.enabled = True
+            yield (array, f"nsd_{prompt}-{gallery_id}")

@@ -1,4 +1,4 @@
-__version__ = "0.0.1"
+__version__ = "0.1.1"
 from ._widget import StableDiffusionWidget
 from ._widget_img2img import StableDiffusionImg2ImgWidget
 from ._widget_inpaint import StableDiffusionInpaintWidget
