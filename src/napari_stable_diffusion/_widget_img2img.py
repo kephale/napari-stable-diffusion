@@ -6,14 +6,10 @@ see: https://napari.org/stable/plugins/guides.html?#widgets
 
 Replace code below according to your needs.
 """
-from typing import TYPE_CHECKING
-
 from qtpy.QtWidgets import (
-    QHBoxLayout,
     QPushButton,
     QWidget,
     QComboBox,
-    QLineEdit,
     QSpinBox,
     QCheckBox,
     QVBoxLayout,
@@ -31,11 +27,9 @@ import os
 import torch
 from diffusers import StableDiffusionImg2ImgPipeline
 
-# from diffusers import StableDiffusionImg2ImgPipeline
-
 import napari
 
-from napari.qt.threading import thread_worker, create_worker
+from napari_stable_diffusion.utils import get_stable_diffusion_model
 
 
 class StableDiffusionImg2ImgWidget(QWidget):
@@ -169,7 +163,7 @@ class StableDiffusionImg2ImgWidget(QWidget):
 
         # Load the pipeline
         pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-            "CompVis/stable-diffusion-v1-4",
+            get_stable_diffusion_model(),
             use_auth_token=MY_SECRET_TOKEN,
             height=height,
             width=width,

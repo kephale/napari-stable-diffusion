@@ -6,14 +6,10 @@ see: https://napari.org/stable/plugins/guides.html?#widgets
 
 Replace code below according to your needs.
 """
-from typing import TYPE_CHECKING
-
 from qtpy.QtWidgets import (
-    QHBoxLayout,
     QPushButton,
     QWidget,
     QComboBox,
-    QLineEdit,
     QSpinBox,
     QCheckBox,
     QVBoxLayout,
@@ -33,6 +29,7 @@ from diffusers import StableDiffusionInpaintPipeline
 
 import napari
 
+from napari_stable_diffusion.utils import get_stable_diffusion_model
 
 class StableDiffusionInpaintWidget(QWidget):
     def __init__(self, napari_viewer):
@@ -172,7 +169,7 @@ class StableDiffusionInpaintWidget(QWidget):
 
         # Load the pipeline
         pipe = StableDiffusionInpaintPipeline.from_pretrained(
-            "CompVis/stable-diffusion-v1-4",
+            get_stable_diffusion_model(),
             use_auth_token=MY_SECRET_TOKEN,
             height=height,
             width=width,

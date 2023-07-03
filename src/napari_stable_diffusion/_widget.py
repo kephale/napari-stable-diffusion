@@ -9,11 +9,9 @@ Replace code below according to your needs.
 from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (
-    QHBoxLayout,
     QPushButton,
     QWidget,
     QComboBox,
-    QLineEdit,
     QSpinBox,
     QCheckBox,
     QVBoxLayout,
@@ -28,13 +26,12 @@ import os
 import torch
 from diffusers import StableDiffusionPipeline
 
-# from diffusers import StableDiffusionImg2ImgPipeline
-
 if TYPE_CHECKING:
     import napari
 
 from napari.qt.threading import thread_worker, create_worker
 
+from napari_stable_diffusion.utils import get_stable_diffusion_model
 
 class StableDiffusionWidget(QWidget):
     def __init__(self, napari_viewer):
@@ -97,6 +94,8 @@ class StableDiffusionWidget(QWidget):
         label.setText("Prompt")
         self.layout().addWidget(label)
         self.layout().addWidget(self.prompt_textbox)
+
+        # negative prompt: ugly, disfigured, low quality, blurry, nsfw
 
         label = QLabel(self)
         label.setText("Number of images")
@@ -164,7 +163,7 @@ class StableDiffusionWidget(QWidget):
 
         # Load the pipeline
         pipe = StableDiffusionPipeline.from_pretrained(
-            "CompVis/stable-diffusion-v1-4",
+            get_stable_diffusion_model(),
             use_auth_token=MY_SECRET_TOKEN,
             height=height,
             width=width,
