@@ -179,9 +179,6 @@ class StableDiffusionWidget(QWidget):
         pipe = StableDiffusionPipeline.from_pretrained(
             get_stable_diffusion_model(),
             use_auth_token=MY_SECRET_TOKEN,
-            height=height,
-            width=width,
-            num_inference_steps=self.num_inference_steps.value(),
         )
         pipe.to(device)
 
@@ -200,7 +197,11 @@ class StableDiffusionWidget(QWidget):
             pipe.latents = latents
             pipe.to(device)
 
-            image_list = pipe([prompt])
+            image_list = pipe([prompt],
+                              height=height,
+                              width=width,
+                              num_inference_steps=self.num_inference_steps.value()
+            )
 
             array = np.array(image_list.images[0])
 
